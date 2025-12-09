@@ -3,6 +3,7 @@
 /**
  * Lightweight API client for backend services.
  * Reads REACT_APP_BACKEND_URL and exposes typed helpers.
+ * Ensure you set REACT_APP_BACKEND_URL in patient_portal_frontend/.env
  */
 
 const BASE_URL = process.env.REACT_APP_BACKEND_URL || "";

@@ -1,8 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+test('renders header and chatbot panel', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  // Header actions
+  expect(screen.getByRole('button', { name: /toggle theme/i })).toBeInTheDocument();
+  // Chatbot input
+  expect(screen.getByRole('textbox', { name: /chat input/i })).toBeInTheDocument();
 });

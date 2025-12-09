@@ -1,47 +1,89 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
+import React, { useMemo, useState } from 'react';
 import './App.css';
+import './index.css';
+import { useTheme } from './hooks/useTheme';
+import Sidebar from './components/Layout/Sidebar';
+import Header from './components/Layout/Header';
+import PatientSummaryCards from './components/Dashboard/PatientSummaryCards';
+import RecentActivities from './components/Dashboard/RecentActivities';
+import PatientList from './components/Patients/PatientList';
+import PatientDetail from './components/Patients/PatientDetail';
+import ChatPanel from './components/Chatbot/ChatPanel';
+
+// Lightweight in-app routing using state (avoids adding router dependency)
+const VIEWS = {
+  DASHBOARD: 'dashboard',
+  PATIENTS: 'patients',
+  PATIENT_DETAIL: 'patient-detail',
+};
 
 // PUBLIC_INTERFACE
 function App() {
-  const [theme, setTheme] = useState('light');
+  /** Theme hook applies data-theme and provides toggler */
+  const { theme, toggleTheme } = useTheme();
 
-  // Effect to apply theme to document element
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+  // View state
+  const [view, setView] = useState(VIEWS.DASHBOARD);
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
 
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+  const navigateToDashboard = () => setView(VIEWS.DASHBOARD);
+  const navigateToPatients = () => {
+    setSelectedPatientId(null);
+    setView(VIEWS.PATIENTS);
+  };
+  const navigateToPatientDetail = (id) => {
+    setSelectedPatientId(id);
+    setView(VIEWS.PATIENT_DETAIL);
   };
 
+  const content = useMemo(() => {
+    switch (view) {
+      case VIEWS.DASHBOARD:
+        return (
+          <div className="content-grid">
+            <PatientSummaryCards onViewPatients={navigateToPatients} />
+            <RecentActivities />
+          </div>
+        );
+      case VIEWS.PATIENTS:
+        return (
+          <PatientList
+            onSelectPatient={(p) => navigateToPatientDetail(p.id)}
+          />
+        );
+      case VIEWS.PATIENT_DETAIL:
+        return (
+          <PatientDetail
+            patientId={selectedPatientId}
+            onBack={navigateToPatients}
+          />
+        );
+      default:
+        return <div>Not Found</div>;
+    }
+  }, [view, selectedPatientId]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="app-shell">
+      <Sidebar
+        currentView={view}
+        onNavigate={(v) => {
+          if (v === VIEWS.DASHBOARD) navigateToDashboard();
+          if (v === VIEWS.PATIENTS) navigateToPatients();
+        }}
+      />
+      <div className="main-area">
+        <Header
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onNavigateDashboard={navigateToDashboard}
+          onNavigatePatients={navigateToPatients}
+        />
+        <main className="main-content" role="main" aria-live="polite">
+          {content}
+        </main>
+      </div>
+      <ChatPanel aria-label="Chatbot panel" />
     </div>
   );
 }
